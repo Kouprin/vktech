@@ -1,6 +1,6 @@
 <?php
 
-require "globals.php";
+require_once "globals.php";
 
 session_start();
 if (isset($_SESSION['ip']) && ($_SESSION['last_post'] + SESSION_REFRESH_TIME > time())) die('too early');
