@@ -5,5 +5,5 @@
 
 require_once "./php/html_builder.php";
 
-$html = htmlBuildPage(htmlBuildMeta(), htmlBuildBody());
+$html = htmlBuildPage();
 print($html);

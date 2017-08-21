@@ -12,7 +12,7 @@ function htmlBuildUserBar($user_type = 0) {
         }
         $user_bar = $user_bar.
 '          <li class="nav-item '.$active.'">
-            <a class="nav-link" href="#">'.$user_types_array[$i].'></a>
+            <a class="nav-link" href="#" onclick="showUserBar('.$i.')">'.$user_types_array[$i].'</a>
           </li>
 ';
     }
@@ -75,7 +75,7 @@ function htmlBuildMeta() {
                 document.getElementById("userBar").innerHTML = this.responseText;
             }
         };
-        xmlhttp.open("GET", "html_builder.php?q=show_user_bar&which=" + str, true);
+        xmlhttp.open("GET", "php/html_builder.php?q=show_user_bar&which=" + str, true);
         xmlhttp.send();
     }
     </script>
@@ -91,5 +91,6 @@ function htmlBuildPage($user_type, $user_id) {
 $q = $_REQUEST["q"];
 
 if ($q == "show_user_bar") {
-    return htmlBuildUserBar($_REQUEST["which"]);
+    print(htmlBuildUserBar($_REQUEST["which"]));
+    exit(0);
 }
