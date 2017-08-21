@@ -1,0 +1,8 @@
+steps were made:
+1. ubuntu 16.04 LTS, upcloud.com
+==== check digitalocean.com instructions first ====
+2. nginx, https, php executable-not-downloadable (nginx -t tests correctness)
+3. memcached (rerun php-fpm after installing, add all shit to php.ini)
+4. php-dev (phpize)
+5. redis (only stable version for not being fucked up)
+6. bootstrap css/js
