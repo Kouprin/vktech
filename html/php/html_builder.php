@@ -2,8 +2,28 @@
 
 require_once "globals.php";
 
-function htmlBuildBody() {
-    return
+function htmlBuildUserBar($user_type = 0) {
+    $user_bar = "";
+    $user_types_array = unserialize(USER_TYPE_STR);
+    for ($i = 0; $i < USER_TYPES; $i++) {
+        $active = "";
+        if ($i == $user_type) {
+            $active = "active";
+        }
+        $user_bar = $user_bar.
+'          <li class="nav-item '.$active.'">
+            <a class="nav-link" href="#">'.$user_types_array[$i].'></a>
+          </li>
+';
+    }
+    return $user_bar;
+}
+
+function htmlBuildBody($user_type, $user_id) {
+    assert($user_type >= 0 && $user_type < USER_TYPES);
+    $nav = "";
+    $dashboard = "";
+    $body =
 '  <body>
     <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
       <a class="navbar-brand" href="#">VK Tech</a>
@@ -12,19 +32,8 @@ function htmlBuildBody() {
       </button>
 
       <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-        <ul class="navbar-nav mr-auto">
-          <li class="nav-item active">
-            <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Settings</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Profile</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Help</a>
-          </li>
+        <ul class="navbar-nav mr-auto" id="userBar">
+'.htmlBuildUserBar($user_type).'
         </ul>
         <form class="form-inline mt-2 mt-md-0">
           <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
@@ -32,11 +41,19 @@ function htmlBuildBody() {
         </form>
       </div>
     </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+'.$nav."\n".$dashboard.'
+      </div>
+    </div>
+    <script src="./js/bootstrap.min.js"></script>
   </body>';
+    return $body;
 }
 
 function htmlBuildMeta() {
-    return 
+    $meta =
 '  <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -50,10 +67,29 @@ function htmlBuildMeta() {
 
     <!-- Custom styles for this template -->
     <link href="dashboard.css" rel="stylesheet">
+    <script>
+    function showUserBar(str) {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("userBar").innerHTML = this.responseText;
+            }
+        };
+        xmlhttp.open("GET", "html_builder.php?q=show_user_bar&which=" + str, true);
+        xmlhttp.send();
+    }
+    </script>
   </head>';
+    return $meta;
 }
 
-function htmlBuildPage($meta, $body) {
-    $page = '<!DOCTYPE html>'."\n".'<html lang="ru">'."\n".$meta."\n".$body."\n".'</html>';
+function htmlBuildPage($user_type, $user_id) {
+    $page = '<!DOCTYPE html>'."\n".'<html lang="ru">'."\n".htmlBuildMeta()."\n".htmlBuildBody($user_type, $user_id)."\n".'</html>';
     return $page;
+}
+
+$q = $_REQUEST["q"];
+
+if ($q == "show_user_bar") {
+    return htmlBuildUserBar($_REQUEST["which"]);
 }
