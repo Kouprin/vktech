@@ -2,27 +2,87 @@
 
 require_once "globals.php";
 
-function htmlBuildUserBar($user_type = 0) {
+function htmlBuildDashboard() {
+    $user_types_array = unserialize(USER_TYPE_STR);
+    $dashboard =
+'            <main class="col-sm-9 ml-sm-auto col-md-10 pt-3" role="main">
+               <h1>Dashboard</h1>
+               <div class="text-muted">'.$user_types_array[getUserType()].' with user_id = '.intval(getUserId()).' is chosen for now</div>
+             </main>
+';
+    return $dashboard;
+}
+
+function htmlBuildNav() {
+    $nav =
+'        <nav class="col-sm-3 col-md-2 d-none d-sm-block bg-light sidebar">
+          <ul class="nav nav-pills flex-column">
+';
+    $nav_types_array = unserialize(NAV_TYPE_STR);
+    for ($i = 0; $i < NAV_TYPES; $i++) {
+        if (checkRights($i) == True) {
+            $active = "";
+            if ($i == getNavType()) {
+                $active = "active";
+            }
+            $nav = $nav.
+'          <li class="nav-item">
+            <a class="nav-link '.$active.'" href="#" onclick="setNav('.$i.')">'.$nav_types_array[$i].'</a>
+          </li>
+';
+        }
+    }
+    $nav = $nav.
+'          </ul>
+        </nav>
+';
+    return $nav;
+}
+
+function htmlBuildNavDashboard() {
+    $navDashboard = 
+'    <div class="container-fluid">
+      <div class="row">
+'.htmlBuildNav().htmlBuildDashboard().'
+      </div>
+    </div>';
+    return $navDashboard;
+}
+
+function htmlBuildUserBar() {
     $user_bar = "";
     $user_types_array = unserialize(USER_TYPE_STR);
     for ($i = 0; $i < USER_TYPES; $i++) {
         $active = "";
-        if ($i == $user_type) {
+        if ($i == getUserType()) {
             $active = "active";
         }
         $user_bar = $user_bar.
 '          <li class="nav-item '.$active.'">
-            <a class="nav-link" href="#" onclick="showUserBar('.$i.')">'.$user_types_array[$i].'</a>
+            <a class="nav-link" href="#" onclick="setUserType('.$i.')">'.$user_types_array[$i].'</a>
           </li>
 ';
     }
     return $user_bar;
 }
 
-function htmlBuildBody($user_type, $user_id) {
+function htmlBuildSessionForm() {
+    $inputDisabled = '';
+    if (getUserType() == ADMIN_USER_TYPE) {
+        // there are no admin ids
+        $inputDisabled = 'disabled';
+    }
+    $form =
+'        <form class="form-inline mt-2 mt-md-0">
+          <input class="form-control mr-sm-2" type="text" placeholder="user id" aria-label="UserId" id="userId" '.$inputDisabled.'>
+          <button class="btn btn-outline-success my-2 my-sm-0" type="submit" onclick="setUserId()">Session start</button>
+        </form>
+';
+    return $form;
+}
+
+function htmlBuildBody($user_bar_only) {
     assert($user_type >= 0 && $user_type < USER_TYPES);
-    $nav = "";
-    $dashboard = "";
     $body =
 '  <body>
     <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
@@ -32,21 +92,19 @@ function htmlBuildBody($user_type, $user_id) {
       </button>
 
       <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-        <ul class="navbar-nav mr-auto" id="userBar">
-'.htmlBuildUserBar($user_type).'
+        <ul class="navbar-nav ml-auto" id="userBar">
+'.htmlBuildUserBar().'
         </ul>
-        <form class="form-inline mt-2 mt-md-0">
-          <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
-          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-        </form>
+'.htmlBuildSessionForm().'
       </div>
     </nav>
-
-    <div class="container-fluid">
-      <div class="row">
-'.$nav."\n".$dashboard.'
-      </div>
-    </div>
+    <span id="navDashboardId">
+';
+    if ($user_bar_only == False) {
+        $body = $body.htmlBuildNavDashboard();
+    }
+    $body = $body.
+'     </span>
     <script src="./js/bootstrap.min.js"></script>
   </body>';
     return $body;
@@ -68,14 +126,36 @@ function htmlBuildMeta() {
     <!-- Custom styles for this template -->
     <link href="dashboard.css" rel="stylesheet">
     <script>
-    function showUserBar(str) {
+    function setUserType(str) {
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
-                document.getElementById("userBar").innerHTML = this.responseText;
+                // do nothing - make it better
             }
         };
-        xmlhttp.open("GET", "php/html_builder.php?q=show_user_bar&which=" + str, true);
+        xmlhttp.open("GET", "php/html_builder.php?q=set_user_type&type=" + str, true);
+        xmlhttp.send();
+        location.reload();
+    }
+    function setUserId() {
+        var str = document.getElementById("userId").value;
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("navDashboardId").innerHTML = this.responseText;
+            }
+        };
+        xmlhttp.open("GET", "php/html_builder.php?q=set_user_id&id=" + str, true);
+        xmlhttp.send();
+    }
+    function setNav(str) {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("navDashboardId").innerHTML = this.responseText;
+            }
+        };
+        xmlhttp.open("GET", "php/html_builder.php?q=set_nav&nav=" + str, true);
         xmlhttp.send();
     }
     </script>
@@ -83,14 +163,53 @@ function htmlBuildMeta() {
     return $meta;
 }
 
-function htmlBuildPage($user_type, $user_id) {
-    $page = '<!DOCTYPE html>'."\n".'<html lang="ru">'."\n".htmlBuildMeta()."\n".htmlBuildBody($user_type, $user_id)."\n".'</html>';
+function htmlBuildPage($user_bar_only) {
+    $page = '<!DOCTYPE html>'."\n".'<html lang="ru">'."\n".htmlBuildMeta()."\n".htmlBuildBody($user_bar_only)."\n".'</html>';
     return $page;
 }
 
-$q = $_REQUEST["q"];
 
-if ($q == "show_user_bar") {
-    print(htmlBuildUserBar($_REQUEST["which"]));
-    exit(0);
+if (isset($_REQUEST["q"])) {
+    $q = $_REQUEST["q"];
+
+    // for demo only!
+    //
+    if ($q == "set_user_type") {
+        assert($_REQUEST["type"]);
+        $type = $_REQUEST["type"];
+        assert(0 <= $type && $type < USER_TYPES);
+        session_start();
+        $_SESSION["user_type"] = $type;
+        $_SESSION['nav_type'] = 0;
+        $_SESSION["user_id"] = 0;
+        $_SESSION['session_started'] = 0;
+    }
+
+    // for demo only!
+    //
+    if ($q == "set_user_id") {
+        if (!isset($_REQUEST["id"])) {
+            $id = 0;
+        } else {
+            $id = $_REQUEST["id"];
+        }
+        assert(0 <= $id && $id < USER_IDS);
+        session_start();
+        $_SESSION["user_id"] = $id;
+        $_SESSION['session_started'] = 1;
+        print(htmlBuildNavDashboard());
+    }
+
+    // okay, that's fine
+    //
+    if ($q == "set_nav") {
+        if (!isset($_REQUEST["nav"])) {
+            die();
+        }
+        $nav = $_REQUEST["nav"];
+        session_start();
+        if (setNavType($nav)) {
+            print(htmlBuildNavDashboard());
+        }
+    }
 }

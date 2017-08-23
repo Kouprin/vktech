@@ -1,8 +1,52 @@
 <?php
 define("SESSION_REFRESH_TIME", 100);
+
 define("USER_TYPES", 3);
 define("ADMIN_USER_TYPE", 0);
 define("CUSTOMER_USER_TYPE", 1);
 define("EXECUTOR_USER_TYPE", 2);
+define("USER_TYPE_STR", serialize(array('Admin', 'Customer', 'Executor')));
 
-define("USER_TYPE_STR", serialize(array('Администратор', 'Заказчик', 'Исполнитель')));
+define("NAV_TYPES", 7);
+define("NAV_TYPE_STR", serialize(array('All orders', 'My active orders', 'My completed orders', 'New order', 'Update order', 'All customers', 'All executors')));
+
+define("NAV_RIGHTS", serialize(array(7, 6, 6, 2, 2, 1, 1))); // a bitmask: each bit means an appropriate user type
+
+function setNavType($nav) {
+    if (!(0 <= $nav && $nav < NAV_TYPES)) {
+        return False;
+    }
+    if (!checkRights($nav)) {
+        return False;
+    }
+    $_SESSION["nav_type"] = $nav;
+    return True;
+}
+
+function getNavType() {
+    if (!isset($_SESSION["nav_type"])) {
+        $_SESSION["nav_type"] = 0;
+    }
+    return $_SESSION["nav_type"];
+}
+
+function getUserType() {
+    if (!isset($_SESSION["user_type"])) {
+        $_SESSION["user_type"] = 0;
+    }
+    return $_SESSION["user_type"];
+}
+
+function getUserId() {
+    if (!isset($_SESSION["user_id"])) {
+        $_SESSION["user_id"] = 0;
+    }
+    return $_SESSION["user_id"];
+}
+
+function checkRights($nav) {
+    $nav_rights_array = unserialize(NAV_RIGHTS);
+    $nav_access = $nav_rights_array[$nav];
+    $user_type_bit = 1 << getUserType();
+    return ($user_type_bit & $nav_access);
+}
