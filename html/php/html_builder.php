@@ -2,13 +2,57 @@
 
 require_once "globals.php";
 
+function getTableHeader($nav) {
+    return '#,Header,Header2,Header3,Header4';
+}
+
+function htmlBuildTableButtons() {
+    return '<button class="btn btn-outline-primary my-2 my-sm-0 mx-sm-1" width="8%" type="submit" onclick="setUserId()">1</button>'.
+        '<button class="btn btn-outline-primary active my-2 my-sm-0 mx-sm-1" type="submit" onclick="setUserId()">2</button>'.
+        '<button class="btn btn-outline-primary my-2 my-sm-0 mx-sm-1" width="8%" type="submit" onclick="setUserId()">122</button>';
+}
+
+function htmlBuildTable() {
+    $table =
+'            <h2>Data</h2>
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+';
+    $header = explode(',', getTableHeader(getNav()));
+    for ($i = 0; $i < count($header); $i++) {
+        $table = $table.
+'                    <th>'.$header[$i].'</th>
+';
+    }
+    $table = $table.
+'                  </tr>
+                </thead>
+                <tbody>
+';
+    $table = $table.
+'                </tbody>
+              </table>
+';
+    $table = $table.htmlBuildTableButtons().
+'            </div>
+';
+    return $table;
+}
+
 function htmlBuildDashboard() {
     $user_types_array = unserialize(USER_TYPE_STR);
     $dashboard =
 '            <main class="col-sm-9 ml-sm-auto col-md-10 pt-3" role="main">
                <h1>Dashboard</h1>
                <div class="text-muted">'.$user_types_array[getUserType()].' with user_id = '.intval(getUserId()).' is chosen for now</div>
-             </main>
+';
+
+    $dashboard = $dashboard.htmlBuildTable();
+
+    $dashboard = $dashboard.
+'             </main>
 ';
     return $dashboard;
 }
@@ -22,7 +66,7 @@ function htmlBuildNav() {
     for ($i = 0; $i < NAV_TYPES; $i++) {
         if (checkRights($i) == True) {
             $active = "";
-            if ($i == getNavType()) {
+            if ($i == getNav()) {
                 $active = "active";
             }
             $nav = $nav.
@@ -158,6 +202,16 @@ function htmlBuildMeta() {
         xmlhttp.open("GET", "php/html_builder.php?q=set_nav&nav=" + str, true);
         xmlhttp.send();
     }
+    function setPage(str) {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("navDashboardId").innerHTML = this.responseText;
+            }
+        };
+        xmlhttp.open("GET", "php/html_builder.php?q=set_page&page=" + str, true);
+        xmlhttp.send();
+    }
     </script>
   </head>';
     return $meta;
@@ -208,7 +262,17 @@ if (isset($_REQUEST["q"])) {
         }
         $nav = $_REQUEST["nav"];
         session_start();
-        if (setNavType($nav)) {
+        if (setNav($nav)) {
+            print(htmlBuildNavDashboard());
+        }
+    }
+    if ($q == "set_page") {
+        if (!isset($_REQUEST["page"])) {
+            die();
+        }
+        $page = $_REQUEST["page"];
+        session_start();
+        if (setPage($nav)) {
             print(htmlBuildNavDashboard());
         }
     }

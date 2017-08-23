@@ -12,7 +12,7 @@ define("NAV_TYPE_STR", serialize(array('All orders', 'My active orders', 'My com
 
 define("NAV_RIGHTS", serialize(array(7, 6, 6, 2, 2, 1, 1))); // a bitmask: each bit means an appropriate user type
 
-function setNavType($nav) {
+function setNav($nav) {
     if (!(0 <= $nav && $nav < NAV_TYPES)) {
         return False;
     }
@@ -23,11 +23,28 @@ function setNavType($nav) {
     return True;
 }
 
-function getNavType() {
+function setPage($page) {
+    if (!(0 <= $page && $page < PHP_INT_MAX)) {
+        return False;
+    }
+    // that's okay if you want to send a request to show some-huge-number-page directly for some reasons
+    // you'll see no records in the table
+    $_SESSION["page"] = $page;
+    return True;
+}
+
+function getNav() {
     if (!isset($_SESSION["nav_type"])) {
         $_SESSION["nav_type"] = 0;
     }
     return $_SESSION["nav_type"];
+}
+
+function getPage() {
+    if (!isset($_SESSION["page"])) {
+        $_SESSION["page"] = 0;
+    }
+    return $_SESSION["page"];
 }
 
 function getUserType() {
