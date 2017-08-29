@@ -4,12 +4,12 @@ require_once "globals.php";
 require_once "sql.php";
 
 function getRows() {
-    if (getUserType() == CUSTOMER_USER_TYPE) {
+    if (getUserType() == ADMIN_USER_TYPE) {
+        return sqlGet(getNavDBTable(), NULL, getPage());
+    } else if (getUserType() == CUSTOMER_USER_TYPE) {
         return sqlGet(getNavDBTable(), "customer_id = ".getUserId(), getPage());
     } else if (getUserType() == EXECUTOR_USER_TYPE) {
         return sqlGet(getNavDBTable(), "executor_id = ".getUserId(), getPage());
-    } else {
-        return sqlGet(getNavDBTable(), NULL, getPage());
     }
 }
 
@@ -346,6 +346,9 @@ if (isset($_REQUEST["q"])) {
         session_start();
         $_SESSION["user_type"] = $type;
         $_SESSION['nav_type'] = 0;
+        if ($type == CUSTOMER_USER_TYPE) {
+            $_SESSION['nav_type'] = 1;
+        }
         $_SESSION["user_id"] = 0;
         $_SESSION['session_started'] = 0;
         $_SESSION['page'] = 0;
