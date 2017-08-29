@@ -42,7 +42,6 @@ function sqlGet($table, $where, $page = 0) {
         $query = $query." LIMIT ".ITEMS_PER_PAGE;
     }
 
-    print_r($query);
     if (!$result = $sql->query($query)) {
         // TODO print to log instead
         echo "Error: Our query failed to execute and here is why: \n";
@@ -76,6 +75,5 @@ function sqlGetCount($table) {
     while ($row = $result->fetch_array(MYSQLI_NUM)) {
         $rows[] = $row;
     }
-    print_r($rows);
-    return 1234;//$rows[0][0];
+    return $rows[0][0];
 }

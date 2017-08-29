@@ -8,6 +8,9 @@ session_start();
 
 $GLOBALS["html_indent"] = 0;
 require_once "./php/html_builder.php";
+require_once "./php/globals.php";
+require_once "./php/sql.php";
+require_once "./php/flood.php";
 
 if (!isset($_SESSION['session_started']) || ($_SESSION['session_started'] == 0)) {
     if (!isset($_SESSION['user_type'])) {
