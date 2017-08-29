@@ -1,0 +1,4 @@
+{
+    "table" : "executors",
+    "query" : "select"
+}
