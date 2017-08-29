@@ -12,6 +12,8 @@ define("NAV_TYPE_STR", serialize(array('All orders', 'My active orders', 'My com
 
 define("NAV_RIGHTS", serialize(array(7, 6, 6, 2, 2, 1, 1))); // a bitmask: each bit means an appropriate user type
 
+define("ITEMS_PER_PAGE", 30);
+
 function setNav($nav) {
     if (!(0 <= $nav && $nav < NAV_TYPES)) {
         return False;
@@ -37,28 +39,28 @@ function getNav() {
     if (!isset($_SESSION["nav_type"])) {
         $_SESSION["nav_type"] = 0;
     }
-    return $_SESSION["nav_type"];
+    return intval($_SESSION["nav_type"]);
 }
 
 function getPage() {
     if (!isset($_SESSION["page"])) {
         $_SESSION["page"] = 0;
     }
-    return $_SESSION["page"];
+    return intval($_SESSION["page"]);
 }
 
 function getUserType() {
     if (!isset($_SESSION["user_type"])) {
         $_SESSION["user_type"] = 0;
     }
-    return $_SESSION["user_type"];
+    return intval($_SESSION["user_type"]);
 }
 
 function getUserId() {
     if (!isset($_SESSION["user_id"])) {
         $_SESSION["user_id"] = 0;
     }
-    return $_SESSION["user_id"];
+    return intval($_SESSION["user_id"]);
 }
 
 function checkRights($nav) {

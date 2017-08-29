@@ -1,9 +1,33 @@
 <?php
 
 require_once "globals.php";
+require_once "sql.php";
+
+function getRows() {
+    if (getUserType() == CUSTOMER_USER_TYPE) {
+        return sqlGetOrders("customer_id = ".getUserId(), getPage());
+    }
+    if (getUserType() == EXECUTOR_USER_TYPE) {
+        return sqlGetOrders("executor_id = ".getUserId(), getPage());
+    }
+    return NULL;
+}
 
 function getTableHeader($nav) {
     return '#,Header,Header2,Header3,Header4';
+}
+
+function htmlBuildTableRow($row) {
+    htmlIncreaseIndent();
+    $table_row .= htmlPrint('<tr>');
+    htmlIncreaseIndent();
+    for ($i = 0; $i < count($row); $i++) {
+        $table_row .= htmlPrint('<td>'.$row[$i].'</td>');
+    }
+    htmlDecreaseIndent();
+    $table_row .= htmlPrint('</tr>');
+    htmlDecreaseIndent();
+    return $table_row;
 }
 
 function htmlBuildTableButtons() {
@@ -13,55 +37,64 @@ function htmlBuildTableButtons() {
 }
 
 function htmlBuildTable() {
-    $table =
-'            <h2>Data</h2>
-            <div class="table-responsive">
-              <table class="table table-striped">
-                <thead>
-                  <tr>
-';
+    htmlIncreaseIndent();
+    $table .= htmlPrint('<h2>Data</h2>');
+    $table .= htmlPrint('<div class="table-responsive">');
+    htmlIncreaseIndent();
+    $table .= htmlPrint('<table class="table table-striped">');
+    htmlIncreaseIndent();
+    $table .= htmlPrint('<thead>');
+    htmlIncreaseIndent();
+    $table .= htmlPrint('<tr>');
+    htmlIncreaseIndent();
     $header = explode(',', getTableHeader(getNav()));
     for ($i = 0; $i < count($header); $i++) {
-        $table = $table.
-'                    <th>'.$header[$i].'</th>
-';
+        $table .= htmlPrint('<th>'.$header[$i].'</th>');
     }
-    $table = $table.
-'                  </tr>
-                </thead>
-                <tbody>
-';
-    $table = $table.
-'                </tbody>
-              </table>
-';
-    $table = $table.htmlBuildTableButtons().
-'            </div>
-';
+    htmlDecreaseIndent();
+    $table .= htmlPrint('</tr>');
+    htmlDecreaseIndent();
+    $table .= htmlPrint('</thead>');
+    $table .= htmlPrint('<tbody>');
+
+    if ($rows = getRows()) {
+        foreach($rows as $row) {
+            $table .= htmlBuildTableRow($row);
+        }
+    }
+
+    $table .= htmlPrint('</tbody>');
+    htmlDecreaseIndent();
+    $table .= htmlPrint('</table>');
+    htmlDecreaseIndent();
+
+    $table .= htmlBuildTableButtons();
+    $table .= htmlPrint('</div>');
+    htmlDecreaseIndent();
     return $table;
 }
 
 function htmlBuildDashboard() {
     $user_types_array = unserialize(USER_TYPE_STR);
-    $dashboard =
-'            <main class="col-sm-9 ml-sm-auto col-md-10 pt-3" role="main">
-               <h1>Dashboard</h1>
-               <div class="text-muted">'.$user_types_array[getUserType()].' with user_id = '.intval(getUserId()).' is chosen for now</div>
-';
+    htmlIncreaseIndent();
+    $dashboard .= htmlPrint('<main class="col-sm-9 ml-sm-auto col-md-10 pt-3" role="main">');
+    htmlIncreaseIndent();
+    $dashboard .= htmlPrint('<h1>Dashboard</h1>');
+    $dashboard .= htmlPrint('<div class="text-muted">'.$user_types_array[getUserType()].' with user_id = '.intval(getUserId()).' is chosen for now</div>');
 
-    $dashboard = $dashboard.htmlBuildTable();
+    $dashboard .= htmlBuildTable();
 
-    $dashboard = $dashboard.
-'             </main>
-';
+    htmlDecreaseIndent();
+    $dashboard .= htmlPrint('</main>');
+    htmlDecreaseIndent();
     return $dashboard;
 }
 
 function htmlBuildNav() {
-    $nav =
-'        <nav class="col-sm-3 col-md-2 d-none d-sm-block bg-light sidebar">
-          <ul class="nav nav-pills flex-column">
-';
+    htmlIncreaseIndent();
+    $nav .= htmlPrint('<nav class="col-sm-3 col-md-2 d-none d-sm-block bg-light sidebar">');
+    htmlIncreaseIndent();
+    $nav .= htmlPrint('<ul class="nav nav-pills flex-column">');
     $nav_types_array = unserialize(NAV_TYPE_STR);
     for ($i = 0; $i < NAV_TYPES; $i++) {
         if (checkRights($i) == True) {
@@ -69,28 +102,34 @@ function htmlBuildNav() {
             if ($i == getNav()) {
                 $active = "active";
             }
-            $nav = $nav.
-'          <li class="nav-item">
-            <a class="nav-link '.$active.'" href="#" onclick="setNav('.$i.')">'.$nav_types_array[$i].'</a>
-          </li>
-';
+            htmlIncreaseIndent();
+            $nav .= htmlPrint('<li class="nav-item">');
+            htmlIncreaseIndent();
+            $nav .= htmlPrint('<a class="nav-link '.$active.'" href="#" onclick="setNav('.$i.')">'.$nav_types_array[$i].'</a>');
+            htmlDecreaseIndent();
+            $nav .= htmlPrint('</li>');
+            htmlDecreaseIndent();
         }
     }
-    $nav = $nav.
-'          </ul>
-        </nav>
-';
+    $nav .= htmlPrint('</ul>');
+    htmlDecreaseIndent();
+    $nav .= htmlPrint('</nav>');
+    htmlDecreaseIndent();
     return $nav;
 }
 
 function htmlBuildNavDashboard() {
-    $navDashboard = 
-'    <div class="container-fluid">
-      <div class="row">
-'.htmlBuildNav().htmlBuildDashboard().'
-      </div>
-    </div>';
-    return $navDashboard;
+    htmlIncreaseIndent();
+    $nav_dashboard .= htmlPrint('<div class="container-fluid">');
+    htmlIncreaseIndent();
+    $nav_dashboard .= htmlPrint('<div class="row">');
+    $nav_dashboard .= htmlBuildNav();
+    $nav_dashboard .= htmlBuildDashboard();
+    $nav_dashboard .= htmlPrint('</div>');
+    htmlDecreaseIndent();
+    $nav_dashboard .= htmlPrint('</div>');
+    htmlDecreaseIndent();
+    return $nav_dashboard;
 }
 
 function htmlBuildUserBar() {
@@ -101,11 +140,13 @@ function htmlBuildUserBar() {
         if ($i == getUserType()) {
             $active = "active";
         }
-        $user_bar = $user_bar.
-'          <li class="nav-item '.$active.'">
-            <a class="nav-link" href="#" onclick="setUserType('.$i.')">'.$user_types_array[$i].'</a>
-          </li>
-';
+        htmlIncreaseIndent();
+        $user_bar .= htmlPrint('<li class="nav-item '.$active.'">');
+        htmlIncreaseIndent();
+        $user_bar .= htmlPrint('<a class="nav-link" href="#" onclick="setUserType('.$i.')">'.$user_types_array[$i].'</a>');
+        htmlDecreaseIndent();
+        $user_bar .= htmlPrint('</li>');
+        htmlDecreaseIndent();
     }
     return $user_bar;
 }
@@ -116,56 +157,70 @@ function htmlBuildSessionForm() {
         // there are no admin ids
         $inputDisabled = 'disabled';
     }
-    $form =
-'        <form class="form-inline mt-2 mt-md-0">
-          <input class="form-control mr-sm-2" type="text" placeholder="user id" aria-label="UserId" id="userId" '.$inputDisabled.'>
-          <button class="btn btn-outline-success my-2 my-sm-0" type="submit" onclick="setUserId()">Session start</button>
-        </form>
-';
+    htmlIncreaseIndent();
+    $form .= htmlPrint('<form class="form-inline mt-2 mt-md-0">');
+    htmlIncreaseIndent();
+    $form .= htmlPrint('<input class="form-control mr-sm-2" type="text" placeholder="user id" aria-label="UserId" id="userId" '.$inputDisabled.'>');
+    $form .= htmlPrint('<button class="btn btn-outline-success my-2 my-sm-0" type="submit" onclick="setUserId()">Session start</button>');
+    htmlDecreaseIndent();
+    $form .= htmlPrint('</form>');
+    htmlDecreaseIndent();
     return $form;
 }
 
 function htmlBuildBody($user_bar_only) {
     assert($user_type >= 0 && $user_type < USER_TYPES);
-    $body =
-'  <body>
-    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
-      <a class="navbar-brand" href="#">VK Tech</a>
-      <button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+    htmlIncreaseIndent();
+    $body .= htmlPrint('<body>');
+    htmlIncreaseIndent();
+    $body .= htmlPrint('<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">');
+    htmlIncreaseIndent();
+    $body .= htmlPrint('<a class="navbar-brand" href="#">VK Tech</a>');
+    $body .= htmlPrint('<button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">');
+    htmlIncreaseIndent();
+    $body .= htmlPrint('<span class="navbar-toggler-icon"></span>');
+    htmlDecreaseIndent();
+    $body .= htmlPrint('</button>');
 
-      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-        <ul class="navbar-nav ml-auto" id="userBar">
-'.htmlBuildUserBar().'
-        </ul>
-'.htmlBuildSessionForm().'
-      </div>
-    </nav>
-    <span id="navDashboardId">
-';
+    $body .= htmlPrint('<div class="collapse navbar-collapse" id="navbarsExampleDefault">');
+    htmlIncreaseIndent();
+
+    $body .= htmlPrint('<ul class="navbar-nav ml-auto" id="userBar">');
+    $body .= htmlBuildUserBar();
+    $body .= htmlPrint('</ul>');
+    $body .= htmlBuildSessionForm();
+    htmlDecreaseIndent();
+    $body .= htmlPrint('</div>');
+    htmlDecreaseIndent();
+    $body .= htmlPrint('</nav>');
+
+    $body .= htmlPrint('<span id="navDashboardId">');
     if ($user_bar_only == False) {
-        $body = $body.htmlBuildNavDashboard();
+        $body .= htmlBuildNavDashboard();
     }
-    $body = $body.
-'     </span>
-    <script src="./js/bootstrap.min.js"></script>
-  </body>';
+    $body .= htmlPrint('</span>');
+    htmlDecreaseIndent();
+    $body .= htmlPrint('</body>');
+    htmlDecreaseIndent();
     return $body;
 }
 
 function htmlBuildMeta() {
-    $meta =
-'  <head>
+    htmlIncreaseIndent();
+    $meta .= htmlPrint('<head>');
+    htmlIncreaseIndent();
+    $meta .= htmlPrintIgnoreIndent('
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="">
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
 
     <title>Dashboard Template for Bootstrap</title>
-
-    <!-- Bootstrap core CSS -->
-    <link href="./css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
     <link href="dashboard.css" rel="stylesheet">
@@ -212,16 +267,47 @@ function htmlBuildMeta() {
         xmlhttp.open("GET", "php/html_builder.php?q=set_page&page=" + str, true);
         xmlhttp.send();
     }
-    </script>
-  </head>';
+    </script>');
+    htmlDecreaseIndent();
+    $meta .= htmlPrint('</head>');
+    htmlDecreaseIndent();
     return $meta;
 }
 
 function htmlBuildPage($user_bar_only) {
-    $page = '<!DOCTYPE html>'."\n".'<html lang="ru">'."\n".htmlBuildMeta()."\n".htmlBuildBody($user_bar_only)."\n".'</html>';
+    $page .= htmlPrint('<!DOCTYPE html>');
+    $page .= htmlPrint('<html lang="ru">');
+    $page .= htmlBuildMeta();
+    $page .= htmlBuildBody($user_bar_only);
+    $page .= htmlPrint('</html>');
     return $page;
 }
 
+// It's possible to parse tags and make indent automatically (if necessary).
+// In this life I just don't care.
+
+function htmlIncreaseIndent() {
+    $GLOBALS["html_indent"] += 4;
+}
+
+function htmlDecreaseIndent() {
+    $GLOBALS["html_indent"] -= 4;
+}
+
+function htmlPrint($str) {
+    for($i = 0; $i < $GLOBALS["html_indent"]; $i++) {
+        $html .= " ";
+    }
+    $html .= $str."\n";
+    return $html;
+}
+
+function htmlPrintIgnoreIndent($str) {
+    $html .= $str."\n";
+    return $html;
+}
+
+// main
 
 if (isset($_REQUEST["q"])) {
     $q = $_REQUEST["q"];
@@ -237,6 +323,7 @@ if (isset($_REQUEST["q"])) {
         $_SESSION['nav_type'] = 0;
         $_SESSION["user_id"] = 0;
         $_SESSION['session_started'] = 0;
+        $_SESSION['page'] = 0;
     }
 
     // for demo only!
