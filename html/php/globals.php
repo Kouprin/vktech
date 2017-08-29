@@ -12,6 +12,8 @@ define("NAV_TYPE_STR", serialize(array('All orders', 'My active orders', 'My com
 
 define("NAV_RIGHTS", serialize(array(7, 6, 6, 2, 2, 1, 1))); // a bitmask: each bit means an appropriate user type
 
+define("NAV_DB_TABLES", serialize(array("interactions.orders", "interactions.orders", "interactions.orders", NULL, NULL, "users.customers", "users.executors")));
+
 define("ITEMS_PER_PAGE", 30);
 
 function setNav($nav) {
@@ -40,6 +42,11 @@ function getNav() {
         $_SESSION["nav_type"] = 0;
     }
     return intval($_SESSION["nav_type"]);
+}
+
+function getNavDBTable() {
+    $nav_db_tables = unserialize(NAV_DB_TABLES);
+    return $nav_db_tables[getNav()];
 }
 
 function getPage() {

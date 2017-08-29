@@ -24,23 +24,25 @@ function sqlDisconnect($sql, $result) {
 }
 
 
-function sqlGetOrders($where, $page = 0) {
+function sqlGet($table, $where, $page = 0) {
     $sql = sqlConnect();
-    $query = "SELECT * FROM interactions.orders";
+    $query = "SELECT * FROM ".$table;
 
+    $limit_from = $page * ITEMS_PER_PAGE;
     if ($where) {
         // "customer_id = x"
         // "executor_id = x"
         $query = $query." WHERE ".$where;
+        $query = $query." LIMIT ".$limit_from.','.ITEMS_PER_PAGE;
     } else {
         // use WHERE clause for paging
         if ($page > 0) {
-            $limit_from = $page * ITEMS_PER_PAGE - 1;
-            $query = $query." WHERE id > ".$limit_from;
+            $query = $query." WHERE id >= ".$limit_from;
         }
+        $query = $query." LIMIT ".ITEMS_PER_PAGE;
     }
 
-    $query = $query." LIMIT ".ITEMS_PER_PAGE;
+    print_r($query);
     if (!$result = $sql->query($query)) {
         // TODO print to log instead
         echo "Error: Our query failed to execute and here is why: \n";
@@ -57,4 +59,23 @@ function sqlGetOrders($where, $page = 0) {
     sqlDisconnect($sql, $result);
 
     return $rows;
+}
+
+function sqlGetCount($table) {
+    $sql = sqlConnect();
+    $query = "SELECT count(*) FROM ".$table;
+    if (!$result = $sql->query($query)) {
+        // TODO print to log instead
+        echo "Error: Our query failed to execute and here is why: \n";
+        echo "Query: " . $query . "\n";
+        echo "Errno: " . $sql->errno . "\n";
+        echo "Error: " . $sql->error . "\n";
+        $sql->close();
+    }
+    $rows = [];
+    while ($row = $result->fetch_array(MYSQLI_NUM)) {
+        $rows[] = $row;
+    }
+    print_r($rows);
+    return 1234;//$rows[0][0];
 }

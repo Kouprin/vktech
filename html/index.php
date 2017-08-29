@@ -6,6 +6,7 @@ session_start();
 
 // check flood sessions
 
+$GLOBALS["html_indent"] = 0;
 require_once "./php/html_builder.php";
 
 if (!isset($_SESSION['session_started']) || ($_SESSION['session_started'] == 0)) {

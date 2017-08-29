@@ -1,16 +1,15 @@
 <?php
 
-require_once "globals.php";
 require_once "sql.php";
 
 function getRows() {
     if (getUserType() == CUSTOMER_USER_TYPE) {
-        return sqlGetOrders("customer_id = ".getUserId(), getPage());
+        return sqlGet(getNavDBTable(), "customer_id = ".getUserId(), getPage());
+    } else if (getUserType() == EXECUTOR_USER_TYPE) {
+        return sqlGet(getNavDBTable(), "executor_id = ".getUserId(), getPage());
+    } else {
+        return sqlGet(getNavDBTable(), NULL, getPage());
     }
-    if (getUserType() == EXECUTOR_USER_TYPE) {
-        return sqlGetOrders("executor_id = ".getUserId(), getPage());
-    }
-    return NULL;
 }
 
 function getTableHeader($nav) {
@@ -19,7 +18,7 @@ function getTableHeader($nav) {
 
 function htmlBuildTableRow($row) {
     htmlIncreaseIndent();
-    $table_row .= htmlPrint('<tr>');
+    $table_row = htmlPrint('<tr>');
     htmlIncreaseIndent();
     for ($i = 0; $i < count($row); $i++) {
         $table_row .= htmlPrint('<td>'.$row[$i].'</td>');
@@ -31,14 +30,36 @@ function htmlBuildTableRow($row) {
 }
 
 function htmlBuildTableButtons() {
-    return '<button class="btn btn-outline-primary my-2 my-sm-0 mx-sm-1" width="8%" type="submit" onclick="setUserId()">1</button>'.
-        '<button class="btn btn-outline-primary active my-2 my-sm-0 mx-sm-1" type="submit" onclick="setUserId()">2</button>'.
-        '<button class="btn btn-outline-primary my-2 my-sm-0 mx-sm-1" width="8%" type="submit" onclick="setUserId()">122</button>';
+    $records = sqlGetCount(getNavDBTable());
+    $current_page = getPage();
+    $max_page = intdiv($records, ITEMS_PER_PAGE) - 1;
+    if ($records % ITEMS_PER_PAGE > 0) {
+        $max_page++;
+    }
+    htmlIncreaseIndent();
+    $buttons = htmlPrint('<button class="btn btn-outline-primary my-2 my-sm-0 mx-sm-1" type="submit" onclick="setPage(0)"><<</button>');
+    for ($i = $current_page - 2; $i <= $current_page + 2; $i++) {
+        if ($i >= 0 and $i <= $max_page) {
+            $active = "";
+            if ($i == $current_page) {
+                $active = "active";
+            }
+            $buttons .= htmlPrint('<button class="btn btn-outline-primary '.$active.' my-2 my-sm-0 mx-sm-1" type="submit" onclick="setPage('.$i.')">'.($i + 1).'</button>');
+        }
+    }
+    $buttons .= htmlPrint('<button class="btn btn-outline-primary my-2 my-sm-0 mx-sm-1" type="submit" onclick="setPage('.$max_page.')">>></button>');
+    htmlDecreaseIndent();
+    return $buttons;
 }
 
 function htmlBuildTable() {
     htmlIncreaseIndent();
-    $table .= htmlPrint('<h2>Data</h2>');
+    $table = htmlPrint('<h2>Data</h2>');
+    if (!getNavDBTable()) {
+        htmlDecreaseIndent();
+        // nothing to print!
+        return $table;
+    }
     $table .= htmlPrint('<div class="table-responsive">');
     htmlIncreaseIndent();
     $table .= htmlPrint('<table class="table table-striped">');
@@ -77,7 +98,7 @@ function htmlBuildTable() {
 function htmlBuildDashboard() {
     $user_types_array = unserialize(USER_TYPE_STR);
     htmlIncreaseIndent();
-    $dashboard .= htmlPrint('<main class="col-sm-9 ml-sm-auto col-md-10 pt-3" role="main">');
+    $dashboard = htmlPrint('<main class="col-sm-9 ml-sm-auto col-md-10 pt-3" role="main">');
     htmlIncreaseIndent();
     $dashboard .= htmlPrint('<h1>Dashboard</h1>');
     $dashboard .= htmlPrint('<div class="text-muted">'.$user_types_array[getUserType()].' with user_id = '.intval(getUserId()).' is chosen for now</div>');
@@ -92,7 +113,7 @@ function htmlBuildDashboard() {
 
 function htmlBuildNav() {
     htmlIncreaseIndent();
-    $nav .= htmlPrint('<nav class="col-sm-3 col-md-2 d-none d-sm-block bg-light sidebar">');
+    $nav = htmlPrint('<nav class="col-sm-3 col-md-2 d-none d-sm-block bg-light sidebar">');
     htmlIncreaseIndent();
     $nav .= htmlPrint('<ul class="nav nav-pills flex-column">');
     $nav_types_array = unserialize(NAV_TYPE_STR);
@@ -120,7 +141,7 @@ function htmlBuildNav() {
 
 function htmlBuildNavDashboard() {
     htmlIncreaseIndent();
-    $nav_dashboard .= htmlPrint('<div class="container-fluid">');
+    $nav_dashboard = htmlPrint('<div class="container-fluid">');
     htmlIncreaseIndent();
     $nav_dashboard .= htmlPrint('<div class="row">');
     $nav_dashboard .= htmlBuildNav();
@@ -158,7 +179,7 @@ function htmlBuildSessionForm() {
         $inputDisabled = 'disabled';
     }
     htmlIncreaseIndent();
-    $form .= htmlPrint('<form class="form-inline mt-2 mt-md-0">');
+    $form = htmlPrint('<form class="form-inline mt-2 mt-md-0">');
     htmlIncreaseIndent();
     $form .= htmlPrint('<input class="form-control mr-sm-2" type="text" placeholder="user id" aria-label="UserId" id="userId" '.$inputDisabled.'>');
     $form .= htmlPrint('<button class="btn btn-outline-success my-2 my-sm-0" type="submit" onclick="setUserId()">Session start</button>');
@@ -171,7 +192,7 @@ function htmlBuildSessionForm() {
 function htmlBuildBody($user_bar_only) {
     assert($user_type >= 0 && $user_type < USER_TYPES);
     htmlIncreaseIndent();
-    $body .= htmlPrint('<body>');
+    $body = htmlPrint('<body>');
     htmlIncreaseIndent();
     $body .= htmlPrint('<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">');
     htmlIncreaseIndent();
@@ -207,7 +228,7 @@ function htmlBuildBody($user_bar_only) {
 
 function htmlBuildMeta() {
     htmlIncreaseIndent();
-    $meta .= htmlPrint('<head>');
+    $meta = htmlPrint('<head>');
     htmlIncreaseIndent();
     $meta .= htmlPrintIgnoreIndent('
     <meta charset="utf-8">
@@ -275,6 +296,7 @@ function htmlBuildMeta() {
 }
 
 function htmlBuildPage($user_bar_only) {
+    $page = "";
     $page .= htmlPrint('<!DOCTYPE html>');
     $page .= htmlPrint('<html lang="ru">');
     $page .= htmlBuildMeta();
@@ -295,6 +317,7 @@ function htmlDecreaseIndent() {
 }
 
 function htmlPrint($str) {
+    $html = "";
     for($i = 0; $i < $GLOBALS["html_indent"]; $i++) {
         $html .= " ";
     }
@@ -303,6 +326,7 @@ function htmlPrint($str) {
 }
 
 function htmlPrintIgnoreIndent($str) {
+    $html = "";
     $html .= $str."\n";
     return $html;
 }
@@ -338,6 +362,7 @@ if (isset($_REQUEST["q"])) {
         session_start();
         $_SESSION["user_id"] = $id;
         $_SESSION['session_started'] = 1;
+        $GLOBALS["html_indent"] = 0;
         print(htmlBuildNavDashboard());
     }
 
@@ -350,6 +375,7 @@ if (isset($_REQUEST["q"])) {
         $nav = $_REQUEST["nav"];
         session_start();
         if (setNav($nav)) {
+            $GLOBALS["html_indent"] = 0;
             print(htmlBuildNavDashboard());
         }
     }
@@ -359,7 +385,8 @@ if (isset($_REQUEST["q"])) {
         }
         $page = $_REQUEST["page"];
         session_start();
-        if (setPage($nav)) {
+        if (setPage($page)) {
+            $GLOBALS["html_indent"] = 0;
             print(htmlBuildNavDashboard());
         }
     }
