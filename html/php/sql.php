@@ -122,9 +122,9 @@ function sqlAcceptOrder($order) {
                 // :(
                 return NULL;
             }
-            //$query = "DELETE FROM interactions.orders where id=".$order;
-            //$sql->query($query);
-            //
+            $query = "DELETE FROM interactions.orders where id=".$order;
+            $sql->query($query);
+            
             $query = "UNLOCK TABLES";
             $sql->query($query);
 
