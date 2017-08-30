@@ -18,14 +18,16 @@ function sqlConnect() {
     }
     return $sql;
 }
-function sqlDisconnect($sql, $result) {
-    $result->free();
+function sqlDisconnect($sql) {
     $sql->close();
 }
 
 
 function sqlGet($table, $where, $page = 0) {
-    $sql = sqlConnect();
+    if (!$sql = sqlConnect()) {
+        $_SESSION["error_msg"] = ERR_CANT_CONNECT_MYSQL;
+        return NULL;
+    }
     $query = "SELECT * FROM ".$table;
 
     $limit_from = $page * ITEMS_PER_PAGE;
@@ -57,14 +59,20 @@ function sqlGet($table, $where, $page = 0) {
         $rows[] = $row;
     }
 
-    sqlDisconnect($sql, $result);
+    sqlDisconnect($sql);
 
     return $rows;
 }
 
-function sqlGetCount($table) {
-    $sql = sqlConnect();
+function sqlGetCount($table, $where) {
+    if (!$sql = sqlConnect()) {
+        $_SESSION["error_msg"] = ERR_CANT_CONNECT_MYSQL;
+        return NULL;
+    }
     $query = "SELECT count(*) FROM ".$table;
+    if ($where and $where != "") {
+        $query .= " WHERE ".$where;
+    }
     if (!$result = $sql->query($query)) {
         // TODO print to log instead
         echo "Error: Our query failed to execute and here is why: \n";
@@ -79,5 +87,53 @@ function sqlGetCount($table) {
     while ($row = $result->fetch_array(MYSQLI_NUM)) {
         $rows[] = $row;
     }
+    sqlDisconnect($sql);
     return $rows[0][0];
+}
+
+function sqlAcceptOrder($order) {
+    if (!$sql = sqlConnect()) {
+        $_SESSION["error_msg"] = ERR_CANT_CONNECT_MYSQL;
+        return NULL;
+    }
+    $query = "LOCK TABLES interactions.orders WRITE, interactions.contracts WRITE, users.customers WRITE, users.executors WRITE";
+    if (!$result = $sql->query($query)) {
+        $_SESSION["error_msg"] = ERR_CANT_LOCK_TABLES;
+        return NULL;
+    } else {
+        $query = "SELECT * from interactions.orders where id=".$order;
+        if (($result = $sql->query($query)) and ($result->num_rows == 1)) {
+            // Make sure that the order still exists.
+            // If true, it cannot run away because tables have been locked.
+            $_SESSION["error_msg"] = ERR_OKAY;
+            $row = $result->fetch_array();
+            $query = "INSERT into interactions.contracts (customer_id, executor_id, status, description, money_cost, original_currency, created, last_action) values (".
+                $row["customer_id"].",".
+                getUserId().",".
+                "'ACCEPTED',".
+                q($row["description"]).",".
+                q($row["money_cost"]).",".
+                q($row["original_currency"]).",".
+                q($row["created"]).",".
+                q(date("Y-m-d H:i:s")).")";
+            if (!$result = $sql->query($query)) {
+                // mysql failed in process
+                // :(
+                return NULL;
+            }
+            $query = "DELETE FROM interactions.orders where id=".$order;
+            if (!$result = $sql->query($query)) {
+                // mysql failed in process
+                // :(
+                return NULL;
+            }
+        } else {
+            $_SESSION["error_msg"] = ERR_CANT_FIND_ORDER;
+        }
+    }
+    $query = "UNLOCK TABLES";
+    if (!$result = $sql->query($query)) {
+        $_SESSION["error_msg"] = ERR_CANT_UNLOCK_TABLES;
+        return NULL;
+    }
 }

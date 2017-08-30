@@ -3,19 +3,24 @@
 require_once "globals.php";
 require_once "sql.php";
 
+function getWhere() {
+    $where = "";
+
+    if (getNavDBTable() == "interactions.contracts") {
+        if (getUserType() == CUSTOMER_USER_TYPE) {
+            $where = "customer_id = ".getUserId();
+        } else if (getUserType() == EXECUTOR_USER_TYPE) {
+            $where = "executor_id = ".getUserId();
+        }
+    }
+    if (getNavDBTable() == "interactions.orders" and getUserType() == CUSTOMER_USER_TYPE) {
+        $where = "customer_id = ".getUserId();
+    }
+    return $where;
+}
+
 function getRows() {
-    $where_id = "";
-    if (getUserType() == ADMIN_USER_TYPE) {
-        //return sqlGet(getNavDBTable(), NULL, getPage());
-    } else if (getUserType() == CUSTOMER_USER_TYPE) {
-        $where_id = "customer_id = ".getUserId();
-    } else if (getUserType() == EXECUTOR_USER_TYPE) {
-        $where_id = "executor_id = ".getUserId();
-    }
-    if (getNavDBTable() == "interactions.orders") {
-        $where_id = "";
-    }
-    $rows = sqlGet(getNavDBTable(), $where_id, getPage());
+    $rows = sqlGet(getNavDBTable(), getWhere(), getPage());
     return $rows;
 }
 
@@ -37,7 +42,7 @@ function htmlBuildTableRow($row) {
 }
 
 function htmlBuildTableButtons() {
-    $records = sqlGetCount(getNavDBTable());
+    $records = sqlGetCount(getNavDBTable(), getWhere());
     $current_page = getPage();
     $max_page = intdiv($records, ITEMS_PER_PAGE) - 1;
     if ($records % ITEMS_PER_PAGE > 0) {
@@ -61,7 +66,7 @@ function htmlBuildTableButtons() {
 
 function htmlBuildAcceptButton($id = 0) {
     htmlIncreaseIndent();
-    $button = htmlPrint('<button class="btn btn-outline-success my-2 my-sm-0 mx-sm-1" type="submit" onclick="takeOrder('.$id.')">ACCEPT</button>');
+    $button = htmlPrint('<button class="btn btn-outline-success my-2 my-sm-0 mx-sm-1" type="submit" onclick="acceptOrder('.$id.')">ACCEPT</button>');
     htmlDecreaseIndent();
     return $button;
 }
@@ -94,7 +99,7 @@ function htmlBuildTable() {
 
     if ($rows = getRows()) {
         if (getUserType() == EXECUTOR_USER_TYPE and getNav() == 0) {
-            // Add buttons to accept orders
+            // Add buttons to take orders
             for($i = 0; $i < count($rows); $i++) {
                 $rows[$i][] = htmlBuildAcceptButton($rows[$i][0]);
             }
@@ -255,6 +260,7 @@ function htmlBuildMeta() {
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="">
+
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
@@ -287,6 +293,7 @@ function htmlBuildMeta() {
         };
         xmlhttp.open("GET", "php/html_builder.php?q=set_user_id&id=" + str, true);
         xmlhttp.send();
+        location.reload();
     }
     function setNav(str) {
         var xmlhttp = new XMLHttpRequest();
@@ -297,6 +304,7 @@ function htmlBuildMeta() {
         };
         xmlhttp.open("GET", "php/html_builder.php?q=set_nav&nav=" + str, true);
         xmlhttp.send();
+        location.reload();
     }
     function setPage(str) {
         var xmlhttp = new XMLHttpRequest();
@@ -307,6 +315,18 @@ function htmlBuildMeta() {
         };
         xmlhttp.open("GET", "php/html_builder.php?q=set_page&page=" + str, true);
         xmlhttp.send();
+        location.reload();
+    }
+    function acceptOrder(str) {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("navDashboardId").innerHTML = this.responseText;
+            }
+        };
+        xmlhttp.open("GET", "php/html_builder.php?q=accept_order&id=" + str, true);
+        xmlhttp.send();
+        location.reload();
     }
     </script>');
     htmlDecreaseIndent();
@@ -413,4 +433,17 @@ if (isset($_REQUEST["q"])) {
             print(htmlBuildNavDashboard());
         }
     }
+    if ($q == "accept_order") {
+        if (!isset($_REQUEST["id"])) {
+            die();
+        }
+        $id = $_REQUEST["id"];
+        session_start();
+        sqlAcceptOrder($id);
+        $GLOBALS["html_indent"] = 0;
+        print(htmlBuildNavDashboard());
+    }
 }
+
+//$new = htmlspecialchars("<a href='test'>Test</a>", ENT_QUOTES);
+//http://docs.php.net/manual/en/function.htmlspecialchars.php

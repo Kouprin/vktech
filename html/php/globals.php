@@ -8,13 +8,19 @@ define("EXECUTOR_USER_TYPE", 2);
 define("USER_TYPE_STR", serialize(array('Admin', 'Customer', 'Executor')));
 
 define("NAV_TYPES", 8);
-define("NAV_TYPE_STR", serialize(array('All orders', 'My active contracts', 'My closed contracts', 'New order', 'Update order', 'All contracts', 'All customers', 'All executors')));
+define("NAV_TYPE_STR", serialize(array('All orders', 'My orders', 'My contracts', 'New order', 'Update order', 'All contracts', 'All customers', 'All executors')));
 
-define("NAV_RIGHTS", serialize(array(5, 6, 6, 2, 0, 1, 1, 1))); // a bitmask: each bit means an appropriate user type
+define("NAV_RIGHTS", serialize(array(5, 2, 6, 2, 0, 1, 1, 1))); // a bitmask: each bit means an appropriate user type
 
-define("NAV_DB_TABLES", serialize(array("interactions.orders", "interactions.contracts", "interactions.contracts", NULL, NULL, "interactions.contracts", "users.customers", "users.executors")));
+define("NAV_DB_TABLES", serialize(array("interactions.orders", "interactions.orders", "interactions.contracts", NULL, NULL, "interactions.contracts", "users.customers", "users.executors")));
 
 define("ITEMS_PER_PAGE", 30);
+
+define("ERR_OKAY", "Seems to be everything okay");
+define("ERR_CANT_CONNECT_MYSQL", "Ooops, can't connect to database, try again. :(");
+define("ERR_CANT_LOCK_TABLES", "Ooops, cannot lock tables, try again. :(");
+define("ERR_CANT_UNLOCK_TABLES", "WTF, can't unlock tables! Call for admins. :(");
+define("ERR_CANT_FIND_ORDER", "Ooops, couldn't find your order, try again. :(");
 
 function setNav($nav) {
     if (!(0 <= $nav && $nav < NAV_TYPES)) {
@@ -75,4 +81,8 @@ function checkRights($nav) {
     $nav_access = $nav_rights_array[$nav];
     $user_type_bit = 1 << getUserType();
     return ($user_type_bit & $nav_access);
+}
+
+function q($str) {
+    return "'".$str."'";
 }
