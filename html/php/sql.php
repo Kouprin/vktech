@@ -29,7 +29,7 @@ function sqlGet($table, $where, $page = 0) {
     $query = "SELECT * FROM ".$table;
 
     $limit_from = $page * ITEMS_PER_PAGE;
-    if ($where) {
+    if ($where and $where != "") {
         // "customer_id = x"
         // "executor_id = x"
         $query = $query." WHERE ".$where;
@@ -49,6 +49,8 @@ function sqlGet($table, $where, $page = 0) {
         echo "Errno: " . $sql->errno . "\n";
         echo "Error: " . $sql->error . "\n";
         $sql->close();
+        // TODO show err message
+        return [];
     }
     $rows = [];
     while ($row = $result->fetch_array(MYSQLI_NUM)) {
@@ -70,6 +72,8 @@ function sqlGetCount($table) {
         echo "Errno: " . $sql->errno . "\n";
         echo "Error: " . $sql->error . "\n";
         $sql->close();
+        // TODO show err message
+        return 0;
     }
     $rows = [];
     while ($row = $result->fetch_array(MYSQLI_NUM)) {

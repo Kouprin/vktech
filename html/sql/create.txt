@@ -4,9 +4,12 @@ create table customers (id int auto_increment, global_id int, orders_created int
 create table executors (id int auto_increment, global_id int, orders_completed int, money_received varchar(50), registered DATETIME, gain varchar(50), primary key (id), index (global_id), index(registered));
 create database interactions;
 use interactions;
-create table orders (id int auto_increment, customer_id int, executor_id int, status varchar(20), description varchar(8000), money_cost varchar(50), original_currency char(3), created DATETIME, last_action DATETIME, primary key (id), index (customer_id), index (executor_id), index(last_action));
+create table orders (id int auto_increment, customer_id int, status varchar(20), description varchar(8000), money_cost varchar(50), original_currency char(3), created DATETIME, last_action DATETIME, primary key (id), index (customer_id), index(last_action));
+create table contracts (id int auto_increment, customer_id int, executor_id int, status varchar(20), description varchar(8000), money_cost varchar(50), original_currency char(3), created DATETIME, last_action DATETIME, primary key (id), index (customer_id), index (executor_id), index(last_action));
 
-insert into orders values(1, 123, 666, "CREATED", "a test order #1", "1234000000", "RUR", curtime(), curtime());
+insert into contracts values(1, 123, 666, "CREATED", "a test order #1", "1234000000", "RUR", curtime(), curtime());
+insert into orders values(1, 123, "CREATED", "a test order #1", "777000000", "RUR", curtime(), curtime());
+insert into orders values(2, 234, "CREATED", "a test order #2", "888000000", "RUR", curtime(), curtime());
 
 CREATE USER 'vktech'@'localhost' IDENTIFIED BY 'vktech';
 GRANT ALL PRIVILEGES ON interactions.* TO 'vktech'@'localhost' WITH GRANT OPTION;

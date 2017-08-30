@@ -4,13 +4,19 @@ require_once "globals.php";
 require_once "sql.php";
 
 function getRows() {
+    $where_id = "";
     if (getUserType() == ADMIN_USER_TYPE) {
-        return sqlGet(getNavDBTable(), NULL, getPage());
+        //return sqlGet(getNavDBTable(), NULL, getPage());
     } else if (getUserType() == CUSTOMER_USER_TYPE) {
-        return sqlGet(getNavDBTable(), "customer_id = ".getUserId(), getPage());
+        $where_id = "customer_id = ".getUserId();
     } else if (getUserType() == EXECUTOR_USER_TYPE) {
-        return sqlGet(getNavDBTable(), "executor_id = ".getUserId(), getPage());
+        $where_id = "executor_id = ".getUserId();
     }
+    if (getNavDBTable() == "interactions.orders") {
+        $where_id = "";
+    }
+    $rows = sqlGet(getNavDBTable(), $where_id, getPage());
+    return $rows;
 }
 
 function getTableHeader($nav) {
@@ -53,6 +59,13 @@ function htmlBuildTableButtons() {
     return $buttons;
 }
 
+function htmlBuildAcceptButton($id = 0) {
+    htmlIncreaseIndent();
+    $button = htmlPrint('<button class="btn btn-outline-success my-2 my-sm-0 mx-sm-1" type="submit" onclick="takeOrder('.$id.')">ACCEPT</button>');
+    htmlDecreaseIndent();
+    return $button;
+}
+
 function htmlBuildTable() {
     htmlIncreaseIndent();
     $table = htmlPrint('<h2>Data</h2>');
@@ -80,6 +93,12 @@ function htmlBuildTable() {
     $table .= htmlPrint('<tbody>');
 
     if ($rows = getRows()) {
+        if (getUserType() == EXECUTOR_USER_TYPE and getNav() == 0) {
+            // Add buttons to accept orders
+            for($i = 0; $i < count($rows); $i++) {
+                $rows[$i][] = htmlBuildAcceptButton($rows[$i][0]);
+            }
+        }
         foreach($rows as $row) {
             $table .= htmlBuildTableRow($row);
         }

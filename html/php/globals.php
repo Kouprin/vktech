@@ -8,11 +8,11 @@ define("EXECUTOR_USER_TYPE", 2);
 define("USER_TYPE_STR", serialize(array('Admin', 'Customer', 'Executor')));
 
 define("NAV_TYPES", 8);
-define("NAV_TYPE_STR", serialize(array('All active orders', 'My active orders', 'My completed orders', 'New order', 'Update order', 'All orders', 'All customers', 'All executors')));
+define("NAV_TYPE_STR", serialize(array('All orders', 'My active contracts', 'My closed contracts', 'New order', 'Update order', 'All contracts', 'All customers', 'All executors')));
 
-define("NAV_RIGHTS", serialize(array(5, 6, 6, 2, 2, 1, 1, 1))); // a bitmask: each bit means an appropriate user type
+define("NAV_RIGHTS", serialize(array(5, 6, 6, 2, 0, 1, 1, 1))); // a bitmask: each bit means an appropriate user type
 
-define("NAV_DB_TABLES", serialize(array("interactions.orders", "interactions.orders", "interactions.orders", NULL, NULL, "interactions.orders", "users.customers", "users.executors")));
+define("NAV_DB_TABLES", serialize(array("interactions.orders", "interactions.contracts", "interactions.contracts", NULL, NULL, "interactions.contracts", "users.customers", "users.executors")));
 
 define("ITEMS_PER_PAGE", 30);
 
