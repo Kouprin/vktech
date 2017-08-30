@@ -71,14 +71,61 @@ function htmlBuildAcceptButton($id = 0) {
     return $button;
 }
 
+function htmlBuildNewOrder() {
+    htmlIncreaseIndent();
+    $new_order = htmlPrint('<form>');
+    htmlIncreaseIndent();
+
+    $new_order .= htmlPrint('<div class="form-group">');
+    htmlIncreaseIndent();
+    $new_order .= htmlPrint('<label for="orderDescription">Order description</label>');
+    $new_order .= htmlPrint('<textarea class="form-control" id="orderDescription" rows="3">This is my fantastic order! I am user #'.getUserId().'.</textarea>');
+    htmlDecreaseIndent();
+    $new_order .= htmlPrint('</div>');
+
+    $new_order .= htmlPrint('<div class="form-group row">');
+    htmlIncreaseIndent();
+    $new_order .= htmlPrint('<label for="moneyAmount" class="col-2 col-form-label">Money</label>');
+    htmlIncreaseIndent();
+    $new_order .= htmlPrint('<div class="col-10">');
+    //$new_order .= htmlPrint('<input class="form-control" type="number" value="99.95" id="moneyAmount">');
+    $new_order .= htmlPrint('<input class="form-control" value="99.95" id="moneyAmount">');
+    htmlDecreaseIndent();
+    $new_order .= htmlPrint('</div>');
+    htmlDecreaseIndent();
+    $new_order .= htmlPrint('</div>');
+    htmlDecreaseIndent();
+
+    $new_order .= htmlPrint('<div class="form-group row">');
+    htmlIncreaseIndent();
+    $new_order .= htmlPrint('<label for="currency" class="col-2 col-form-label">Currency</label>');
+    htmlIncreaseIndent();
+    $new_order .= htmlPrint('<div class="col-10">');
+    $new_order .= htmlPrint('<select class="form-control" id="currency">');
+    htmlIncreaseIndent();
+    $new_order .= htmlPrint('<option>RUR</option>');
+    htmlDecreaseIndent();
+    $new_order .= htmlPrint('</select>');
+    htmlDecreaseIndent();
+    $new_order .= htmlPrint('</div>');
+    htmlDecreaseIndent();
+    $new_order .= htmlPrint('</div>');
+
+    $new_order .= htmlPrint('<button type="submit" class="btn btn-primary" onclick="placeOrder()">Place a new order</button>');
+    htmlDecreaseIndent();
+
+    $new_order .= htmlPrint('</form>');
+    htmlDecreaseIndent();
+    return $new_order;
+}
+
 function htmlBuildTable() {
+    if (!getNavDBTable()) {
+        // okay, it's a form for new orders
+        return htmlBuildNewOrder();
+    }
     htmlIncreaseIndent();
     $table = htmlPrint('<h2>Data</h2>');
-    if (!getNavDBTable()) {
-        htmlDecreaseIndent();
-        // nothing to print!
-        return $table;
-    }
     $table .= htmlPrint('<div class="table-responsive">');
     htmlIncreaseIndent();
     $table .= htmlPrint('<table class="table table-striped">');
@@ -120,13 +167,21 @@ function htmlBuildTable() {
     return $table;
 }
 
+function htmlErrorMessage() {
+    $er = "";
+    if ($_SESSION["error_msg"]) {
+        $er .= htmlPrint('<h1>'.$_SESSION["error_msg"].'</h1>');
+        unset($_SESSION["error_msg"]);
+    }
+    return $er;
+}
+
 function htmlBuildDashboard() {
-    $user_types_array = unserialize(USER_TYPE_STR);
     htmlIncreaseIndent();
     $dashboard = htmlPrint('<main class="col-sm-9 ml-sm-auto col-md-10 pt-3" role="main">');
     htmlIncreaseIndent();
     $dashboard .= htmlPrint('<h1>Dashboard</h1>');
-    $dashboard .= htmlPrint('<div class="text-muted">'.$user_types_array[getUserType()].' with user_id = '.intval(getUserId()).' is chosen for now</div>');
+    $dashboard .= htmlErrorMessage();
 
     $dashboard .= htmlBuildTable();
 
@@ -221,7 +276,12 @@ function htmlBuildBody($user_bar_only) {
     htmlIncreaseIndent();
     $body .= htmlPrint('<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">');
     htmlIncreaseIndent();
-    $body .= htmlPrint('<a class="navbar-brand" href="#">VK Tech</a>');
+    $active_user = "";
+    if (!$user_bar_only) {
+        $user_types_array = unserialize(USER_TYPE_STR);
+        $active_user = $user_types_array[getUserType()].', user_id = '.intval(getUserId());
+    }
+    $body .= htmlPrint('<a class="navbar-brand" href="#">VK Tech</a><div class="navbar-brand text-secondary" href="#">'.$active_user.'</div>');
     $body .= htmlPrint('<button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">');
     htmlIncreaseIndent();
     $body .= htmlPrint('<span class="navbar-toggler-icon"></span>');
@@ -293,7 +353,6 @@ function htmlBuildMeta() {
         };
         xmlhttp.open("GET", "php/html_builder.php?q=set_user_id&id=" + str, true);
         xmlhttp.send();
-        location.reload();
     }
     function setNav(str) {
         var xmlhttp = new XMLHttpRequest();
@@ -304,7 +363,6 @@ function htmlBuildMeta() {
         };
         xmlhttp.open("GET", "php/html_builder.php?q=set_nav&nav=" + str, true);
         xmlhttp.send();
-        location.reload();
     }
     function setPage(str) {
         var xmlhttp = new XMLHttpRequest();
@@ -315,7 +373,6 @@ function htmlBuildMeta() {
         };
         xmlhttp.open("GET", "php/html_builder.php?q=set_page&page=" + str, true);
         xmlhttp.send();
-        location.reload();
     }
     function acceptOrder(str) {
         var xmlhttp = new XMLHttpRequest();
@@ -326,7 +383,19 @@ function htmlBuildMeta() {
         };
         xmlhttp.open("GET", "php/html_builder.php?q=accept_order&id=" + str, true);
         xmlhttp.send();
-        location.reload();
+    }
+    function placeOrder(str) {
+        var description = document.getElementById("orderDescription").value;
+        var money = document.getElementById("moneyAmount").value;
+        var currency = document.getElementById("currency").value;
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("navDashboardId").innerHTML = this.responseText;
+            }
+        };
+        xmlhttp.open("GET", "php/html_builder.php?q=place_order&description=" + escape(description) + "&money=" + escape(money) + "&currency=" + currency, true);
+        xmlhttp.send();
     }
     </script>');
     htmlDecreaseIndent();
@@ -443,7 +512,32 @@ if (isset($_REQUEST["q"])) {
         $GLOBALS["html_indent"] = 0;
         print(htmlBuildNavDashboard());
     }
+    if ($q == "place_order") {
+        if (!isset($_REQUEST["money"]) or !isset($_REQUEST["currency"])) {
+            die();
+        }
+        $description = htmlspecialchars($_REQUEST["description"], ENT_QUOTES);
+        $money = intval(floatval($_REQUEST["money"])) * 100;
+        session_start();
+        // TODO: add some number verification - customer should know how we transformed the number he wrote
+        if ($money <= 0 or $money > MAX_ORDER_COST) {
+            // you want something strange
+            // no reason to allow you to do this
+            $_SESSION["error_msg"] = ERR_INCORRECT_ORDER_COST;
+            $GLOBALS["html_indent"] = 0;
+            print(htmlBuildNavDashboard());
+        } else {
+            $money = $money * 100;
+            $currency = $_REQUEST["currency"];
+            // currency should be in the set of valid currencies
+            if ($currency != "RUR") {
+                // the only option for now
+                die();
+            }
+            //sqlAcceptOrder($id);
+            setNav(1); // go to "My orders"
+            $GLOBALS["html_indent"] = 0;
+            print(htmlBuildNavDashboard());
+        }
+    }
 }
-
-//$new = htmlspecialchars("<a href='test'>Test</a>", ENT_QUOTES);
-//http://docs.php.net/manual/en/function.htmlspecialchars.php

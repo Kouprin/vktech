@@ -22,6 +22,11 @@ define("ERR_CANT_LOCK_TABLES", "Ooops, cannot lock tables, try again. :(");
 define("ERR_CANT_UNLOCK_TABLES", "WTF, can't unlock tables! Call for admins. :(");
 define("ERR_CANT_FIND_ORDER", "Ooops, couldn't find your order, try again. :(");
 
+define("ERR_INCORRECT_ORDER_COST", "Incorrect amount");
+
+define("MAX_ORDER_COST", 10 ** 12);
+define("PERCENT_SYSTEM_TAKES", 2);
+
 function setNav($nav) {
     if (!(0 <= $nav && $nav < NAV_TYPES)) {
         return False;
