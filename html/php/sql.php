@@ -96,7 +96,7 @@ function sqlAcceptOrder($order) {
         $_SESSION["error_msg"] = ERR_CANT_CONNECT_MYSQL;
         return NULL;
     }
-    $query = "LOCK TABLES interactions.orders WRITE, interactions.contracts WRITE, users.customers WRITE, users.executors WRITE";
+    $query = "LOCK TABLES interactions.orders WRITE, interactions.contracts WRITE";
     if (!$result = $sql->query($query)) {
         $_SESSION["error_msg"] = ERR_CANT_LOCK_TABLES;
         return NULL;
@@ -116,17 +116,26 @@ function sqlAcceptOrder($order) {
                 q($row["original_currency"]).",".
                 q($row["created"]).",".
                 q(date("Y-m-d H:i:s")).")";
+            $money_cost = $row["money_cost"];
             if (!$result = $sql->query($query)) {
-                // mysql failed in process
+                // mysql failed while processing
                 // :(
                 return NULL;
             }
-            $query = "DELETE FROM interactions.orders where id=".$order;
-            if (!$result = $sql->query($query)) {
-                // mysql failed in process
-                // :(
-                return NULL;
-            }
+            //$query = "DELETE FROM interactions.orders where id=".$order;
+            //$sql->query($query);
+            //
+            $query = "UNLOCK TABLES";
+            $sql->query($query);
+
+            $query = "INSERT IGNORE users.executors (global_id, orders_completed, money_received, registered, gain) VALUES (".getUserId().", 0, 0, ".q(date("Y-m-d H:i:s")).", 0)";
+            $sql->query($query);
+
+            $query = "INSERT INTO users.executors SELECT id, global_id, orders_completed, money_received, registered, gain FROM users.executors WHERE global_id=".getUserId()."
+                ON DUPLICATE KEY UPDATE orders_completed = values(orders_completed)+1, money_received = values(money_received)+".((100 - PERCENT_SYSTEM_TAKES) * $money_cost).", gain = values(gain)+".(PERCENT_SYSTEM_TAKES * $money_cost);
+            $sql->query($query);
+
+            return NULL;
         } else {
             $_SESSION["error_msg"] = ERR_CANT_FIND_ORDER;
         }
@@ -136,4 +145,25 @@ function sqlAcceptOrder($order) {
         $_SESSION["error_msg"] = ERR_CANT_UNLOCK_TABLES;
         return NULL;
     }
+    // return?
+}
+
+function sqlNewOrder($description, $money_cost, $original_currency) {
+    if (!$sql = sqlConnect()) {
+        $_SESSION["error_msg"] = ERR_CANT_CONNECT_MYSQL;
+        return NULL;
+    }
+    $query = "LOCK TABLES interactions.orders WRITE, interactions.contracts WRITE, users.customers WRITE, users.executors WRITE";
+    if (!$result = $sql->query($query)) {
+        $_SESSION["error_msg"] = ERR_CANT_LOCK_TABLES;
+        return NULL;
+    } else {
+        $query = "SELECT * from interactions.orders where id=".$order;
+    }
+    $query = "UNLOCK TABLES";
+    if (!$result = $sql->query($query)) {
+        $_SESSION["error_msg"] = ERR_CANT_UNLOCK_TABLES;
+        return NULL;
+    }
+    // return?
 }
