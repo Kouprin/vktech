@@ -1,6 +1,7 @@
 <?php
 
 require_once "globals.php";
+require_once "redis.php";
 
 
 // One connection per query.
@@ -117,6 +118,7 @@ function sqlAcceptOrder($order) {
                 q($row["created"]).",".
                 q(date("Y-m-d H:i:s")).")";
             $money_cost = $row["money_cost"];
+            $customer = $row["customer_id"];
             if (!$result = $sql->query($query)) {
                 // mysql failed while processing
                 // :(
@@ -136,6 +138,9 @@ function sqlAcceptOrder($order) {
             $query = "INSERT INTO users.executors SELECT id, global_id, orders_completed, money_received, registered, gain FROM users.executors WHERE global_id=".getUserId()."
                 ON DUPLICATE KEY UPDATE orders_completed = values(orders_completed)+1, money_received = values(money_received)+".((100 - PERCENT_SYSTEM_TAKES) * $money).", gain = values(gain)+".(PERCENT_SYSTEM_TAKES * $money);
             $sql->query($query);
+
+            redisFlush(EXECUTOR_USER_TYPE, getUserId());
+            redisFlush(CUSTOMER_USER_TYPE, $customer);
 
             return NULL;
         } else {

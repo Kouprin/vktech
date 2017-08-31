@@ -21,13 +21,11 @@ function getWhere() {
 }
 
 function getRows() {
-    if (!$rows = redisQuery(REDIS_GET)) {
+    if (!$rows = redisQuery(CACHE_GET)) {
         // okay, go to mysql
         $rows = sqlGet(getNavDBTable(), getWhere(), getPage());
-        redisQuery(REDIS_SET, $rows);
-        $_SESSION["taken_from_redis"] = 0;
-    } else {
-        $_SESSION["taken_from_redis"] = 1;
+        redisQuery(CACHE_SET, $rows);
+        unset($_SESSION["taken_from"]);
     }
     return $rows;
 }
@@ -170,9 +168,9 @@ function htmlBuildTable() {
     htmlDecreaseIndent();
 
     $table .= htmlBuildTableButtons();
-    if ($_SESSION["taken_from_redis"] == 1) {
-        $_SESSION["taken_from_redis"] = 0;
-        $table .= htmlPrint('<span class="text-muted">This data is taken from redis</span>');
+    if (isset($_SESSION["taken_from"])) {
+        $table .= htmlPrint('<span class="text-muted">This data is taken from '.$_SESSION["taken_from"].'</span>');
+        unset($_SESSION["taken_from"]);
     }
     $table .= htmlPrint('</div>');
     htmlDecreaseIndent();
@@ -522,7 +520,7 @@ if (isset($_REQUEST["q"])) {
         $id = $_REQUEST["id"];
         session_start();
         sqlAcceptOrder($id);
-        redisQuery(REDIS_DEL);
+        redisQuery(CACHE_DEL);
         $GLOBALS["html_indent"] = 0;
         print(htmlBuildNavDashboard());
     }
@@ -549,7 +547,7 @@ if (isset($_REQUEST["q"])) {
                 die();
             }
             sqlNewOrder($description, $money, $currency);
-            redisQuery(REDIS_DEL);
+            redisQuery(CACHE_DEL);
             setNav(1); // go to "My orders"
             $GLOBALS["html_indent"] = 0;
             print(htmlBuildNavDashboard());
