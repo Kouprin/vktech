@@ -38,11 +38,13 @@ function sqlGet($table, $where, $page = 0) {
         $query = $query." WHERE ".$where;
         $query = $query." LIMIT ".$limit_from.','.ITEMS_PER_PAGE;
     } else {
-        // use WHERE clause for paging
-        if ($page > 0) {
+        // TODO use WHERE clause for paging
+        // change table structure - use index unique(id, status)
+        /*if ($page > 0) {
             $query = $query." WHERE id >= ".$limit_from;
         }
-        $query = $query." LIMIT ".ITEMS_PER_PAGE;
+        $query = $query." LIMIT ".ITEMS_PER_PAGE;*/
+        $query = $query." LIMIT ".$limit_from.','.ITEMS_PER_PAGE;
     }
 
     if (!$result = $sql->query($query)) {
