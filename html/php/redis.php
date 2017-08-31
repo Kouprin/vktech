@@ -30,7 +30,6 @@ function redisQuery($query, $data = NULL) {
     if ($query == CACHE_DEL) {
         $keys_to_del = $redis->keys($user_type.'-'.$user_id.'*');
         foreach($keys_to_del as $key) {
-            print_r("DELETE:".$key."\n");
             $redis->del($key); 
         }
         memcachedQuery(CACHE_DEL);
@@ -54,7 +53,6 @@ function redisFlush($user_type, $executor_id) {
     }
     $keys_to_del = $redis->keys($user_type.'-'.$executor_id.'*');
     foreach($keys_to_del as $key) {
-        print_r("DELETE:".$key."\n");
         $redis->del($key); 
     }
     return True;
