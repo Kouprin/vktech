@@ -498,6 +498,7 @@ if (isset($_REQUEST["q"])) {
         $nav = $_REQUEST["nav"];
         session_start();
         if (setNav($nav)) {
+            setPage(0);
             $GLOBALS["html_indent"] = 0;
             print(htmlBuildNavDashboard());
         }

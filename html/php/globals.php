@@ -14,7 +14,7 @@ define("NAV_RIGHTS", serialize(array(5, 2, 6, 2, 0, 1, 1, 1))); // a bitmask: ea
 
 define("NAV_DB_TABLES", serialize(array("interactions.orders", "interactions.orders", "interactions.contracts", NULL, NULL, "interactions.contracts", "users.customers", "users.executors")));
 
-define("ITEMS_PER_PAGE", 30);
+define("ITEMS_PER_PAGE", 5);
 
 define("ERR_OKAY", "Seems to be everything okay");
 define("ERR_CANT_CONNECT_MYSQL", "Ooops, can't connect to database, try again. :(");

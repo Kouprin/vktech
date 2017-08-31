@@ -81,3 +81,21 @@ function memcachedQuery($query, $data) {
     }
 
 }
+
+function memcachedSize($query, $table, $size) {
+    $mc = new Memcache; 
+    $mc->connect('127.0.0.1', 11211); 
+    if (!$mc) {
+        return NULL;
+    }
+
+    if ($query == CACHE_SET) {
+        return $mc->set($table.'-size', $size); 
+    } else if ($query == CACHE_GET) {
+        return $mc->get($table.'-size');
+    } else {
+        // unknown opp
+        return NULL;
+    }
+
+}
