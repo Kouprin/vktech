@@ -131,8 +131,10 @@ function sqlAcceptOrder($order) {
             $query = "INSERT IGNORE users.executors (global_id, orders_completed, money_received, registered, gain) VALUES (".getUserId().", 0, 0, ".q(date("Y-m-d H:i:s")).", 0)";
             $sql->query($query);
 
+            $money = intdiv($money_cost, 100);
+
             $query = "INSERT INTO users.executors SELECT id, global_id, orders_completed, money_received, registered, gain FROM users.executors WHERE global_id=".getUserId()."
-                ON DUPLICATE KEY UPDATE orders_completed = values(orders_completed)+1, money_received = values(money_received)+".((100 - PERCENT_SYSTEM_TAKES) * $money_cost).", gain = values(gain)+".(PERCENT_SYSTEM_TAKES * $money_cost);
+                ON DUPLICATE KEY UPDATE orders_completed = values(orders_completed)+1, money_received = values(money_received)+".((100 - PERCENT_SYSTEM_TAKES) * $money).", gain = values(gain)+".(PERCENT_SYSTEM_TAKES * $money);
             $sql->query($query);
 
             return NULL;
@@ -153,17 +155,26 @@ function sqlNewOrder($description, $money_cost, $original_currency) {
         $_SESSION["error_msg"] = ERR_CANT_CONNECT_MYSQL;
         return NULL;
     }
-    $query = "LOCK TABLES interactions.orders WRITE, interactions.contracts WRITE, users.customers WRITE, users.executors WRITE";
+    $query = "INSERT into interactions.orders (customer_id, status, description, money_cost, original_currency, created, last_action) values (".
+        getUserId().",".
+        "'CREATED',".
+        q($description).",".
+        $money_cost.",".
+        q($original_currency).",".
+        q(date("Y-m-d H:i:s")).",".
+        q(date("Y-m-d H:i:s")).")";
     if (!$result = $sql->query($query)) {
-        $_SESSION["error_msg"] = ERR_CANT_LOCK_TABLES;
-        return NULL;
-    } else {
-        $query = "SELECT * from interactions.orders where id=".$order;
-    }
-    $query = "UNLOCK TABLES";
-    if (!$result = $sql->query($query)) {
-        $_SESSION["error_msg"] = ERR_CANT_UNLOCK_TABLES;
+        // mysql failed while processing
+        // :(
         return NULL;
     }
+    $query = "INSERT IGNORE users.customers (global_id, orders_created, money_in_orders, registered, gain) VALUES (".getUserId().", 0, 0, ".q(date("Y-m-d H:i:s")).", 0)";
+    $sql->query($query);
+
+    $money = intdiv($money_cost, 100);
+
+    $query = "INSERT INTO users.customers SELECT id, global_id, orders_created, money_in_orders, registered, gain FROM users.customers WHERE global_id=".getUserId()."
+        ON DUPLICATE KEY UPDATE orders_created = values(orders_created)+1, money_in_orders = values(money_in_orders)+".((100 - PERCENT_SYSTEM_TAKES) * $money).", gain = values(gain)+".(PERCENT_SYSTEM_TAKES * $money);
+    $sql->query($query);
     // return?
 }

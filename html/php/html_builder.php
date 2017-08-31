@@ -517,7 +517,7 @@ if (isset($_REQUEST["q"])) {
             die();
         }
         $description = htmlspecialchars($_REQUEST["description"], ENT_QUOTES);
-        $money = intval(floatval($_REQUEST["money"])) * 100;
+        $money = intval(floatval($_REQUEST["money"]) * 100);
         session_start();
         // TODO: add some number verification - customer should know how we transformed the number he wrote
         if ($money <= 0 or $money > MAX_ORDER_COST) {
@@ -534,7 +534,7 @@ if (isset($_REQUEST["q"])) {
                 // the only option for now
                 die();
             }
-            //sqlAcceptOrder($id);
+            sqlNewOrder($description, $money, $currency);
             setNav(1); // go to "My orders"
             $GLOBALS["html_indent"] = 0;
             print(htmlBuildNavDashboard());
