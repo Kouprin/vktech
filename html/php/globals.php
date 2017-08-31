@@ -27,6 +27,10 @@ define("ERR_INCORRECT_ORDER_COST", "Incorrect amount");
 define("MAX_ORDER_COST", 10 ** 12);
 define("PERCENT_SYSTEM_TAKES", 2);
 
+define("REDIS_SET", 0);
+define("REDIS_GET", 1);
+define("REDIS_DEL", 2);
+
 function setNav($nav) {
     if (!(0 <= $nav && $nav < NAV_TYPES)) {
         return False;

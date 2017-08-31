@@ -2,6 +2,7 @@
 
 require_once "globals.php";
 require_once "sql.php";
+require_once "redis.php";
 
 function getWhere() {
     $where = "";
@@ -20,7 +21,14 @@ function getWhere() {
 }
 
 function getRows() {
-    $rows = sqlGet(getNavDBTable(), getWhere(), getPage());
+    if (!$rows = redisQuery(REDIS_GET)) {
+        // okay, go to mysql
+        $rows = sqlGet(getNavDBTable(), getWhere(), getPage());
+        redisQuery(REDIS_SET, $rows);
+        $_SESSION["taken_from_redis"] = 0;
+    } else {
+        $_SESSION["taken_from_redis"] = 1;
+    }
     return $rows;
 }
 
@@ -162,6 +170,10 @@ function htmlBuildTable() {
     htmlDecreaseIndent();
 
     $table .= htmlBuildTableButtons();
+    if ($_SESSION["taken_from_redis"] == 1) {
+        $_SESSION["taken_from_redis"] = 0;
+        $table .= htmlPrint('<span class="text-muted">This data is taken from redis</span>');
+    }
     $table .= htmlPrint('</div>');
     htmlDecreaseIndent();
     return $table;
@@ -281,7 +293,8 @@ function htmlBuildBody($user_bar_only) {
         $user_types_array = unserialize(USER_TYPE_STR);
         $active_user = $user_types_array[getUserType()].', user_id = '.intval(getUserId());
     }
-    $body .= htmlPrint('<a class="navbar-brand" href="#">VK Tech</a><div class="navbar-brand text-secondary" href="#">'.$active_user.'</div>');
+    $body .= htmlPrint('<a class="navbar-brand" href="#">VK Tech</a>');
+    #$body .= htmlPrint('<a class="navbar-brand" href="#">VK Tech</a><div class="navbar-brand text-secondary" href="#">'.$active_user.'</div>');
     $body .= htmlPrint('<button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">');
     htmlIncreaseIndent();
     $body .= htmlPrint('<span class="navbar-toggler-icon"></span>');
@@ -509,6 +522,7 @@ if (isset($_REQUEST["q"])) {
         $id = $_REQUEST["id"];
         session_start();
         sqlAcceptOrder($id);
+        redisQuery(REDIS_DEL);
         $GLOBALS["html_indent"] = 0;
         print(htmlBuildNavDashboard());
     }
@@ -535,6 +549,7 @@ if (isset($_REQUEST["q"])) {
                 die();
             }
             sqlNewOrder($description, $money, $currency);
+            redisQuery(REDIS_DEL);
             setNav(1); // go to "My orders"
             $GLOBALS["html_indent"] = 0;
             print(htmlBuildNavDashboard());
