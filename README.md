@@ -33,8 +33,8 @@ table executors (id int auto_increment, global_id int, orders_completed int, mon
 table orders (id int auto_increment, customer_id int, status varchar(20), description varchar(8000), money_cost bigint, original_currency char(3), created DATETIME, last_action DATETIME, primary key (id), index(customer_id), index(last_action));
 table contracts (id int auto_increment, customer_id int, executor_id int, status varchar(20), description varchar(8000), money_cost bigint, original_currency char(3), created DATETIME, last_action DATETIME, primary key (id), index(customer_id), index(executor_id), index(last_action));
 ```
-The idea is to store orders separately from contracts --- they are really two different essences.
-The other idea is to store customers separetely from executors --- each person could be customer and executor but not at the same time. So, we also store a little different data in those tables.
+The idea is to store orders separately from contracts &mdash; they are really two different essences.
+The other idea is to store customers separetely from executors &mdash; each person could be customer and executor but not at the same time. So, we also store a little different data in those tables.
 
 ## Processing
 
@@ -66,7 +66,7 @@ The orders table is available to see for all executors. This means two things:
 It's important. It's possible to cache the data independently to whom is looking for the page. I use memcached here.
 
 The other case is the case of dependent change. But the data is changing for at most two persons: an executor and a customer.
-I use redis here to store the data with a key *(USER_TYPE, USER_ID, TABLE, PAGE)*, and each refresh flushes only data with keys matched to *(USER_TYPE, USER_ID, <anything>, <anything>)*.
+I use redis here to store the data with a key *(USER_TYPE, USER_ID, TABLE, PAGE)*, and each refresh flushes only data with keys matched to *(USER_TYPE, USER_ID, anything, anything)*.
 
 ## The good sides
 
