@@ -38,12 +38,7 @@ function sqlGet($table, $where, $page = 0) {
         $query = $query." WHERE ".$where;
         $query = $query." LIMIT ".$limit_from.','.ITEMS_PER_PAGE;
     } else {
-        // TODO use WHERE clause for paging
-        // change table structure - use index unique(id, status)
-        /*if ($page > 0) {
-            $query = $query." WHERE id >= ".$limit_from;
-        }
-        $query = $query." LIMIT ".ITEMS_PER_PAGE;*/
+        // TODO increase paging
         $query = $query." LIMIT ".$limit_from.','.ITEMS_PER_PAGE;
     }
 
@@ -92,6 +87,30 @@ function sqlGetCount($table, $where) {
     }
     sqlDisconnect($sql);
     return $rows[0][0];
+}
+
+function sqlGetHeader($table) {
+    if (!$sql = sqlConnect()) {
+        $_SESSION["error_msg"] = ERR_CANT_CONNECT_MYSQL;
+        return NULL;
+    }
+    $query = "SHOW COLUMNS FROM  ".$table;
+    if (!$result = $sql->query($query)) {
+        // TODO print to log instead
+        echo "Error: Our query failed to execute and here is why: \n";
+        echo "Query: " . $query . "\n";
+        echo "Errno: " . $sql->errno . "\n";
+        echo "Error: " . $sql->error . "\n";
+        $sql->close();
+        // TODO show err message
+        return 0;
+    }
+    $rows = [];
+    while ($row = $result->fetch_array()) {
+        $rows[] = $row[0];
+    }
+    sqlDisconnect($sql);
+    return $rows;
 }
 
 function sqlAcceptOrder($order) {

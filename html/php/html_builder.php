@@ -30,8 +30,9 @@ function getRows() {
     return $rows;
 }
 
-function getTableHeader($nav) {
-    return '#,Header,Header2,Header3,Header4';
+function getTableHeader() {
+    $header = sqlGetHeader(getNavDBTable());
+    return $header;
 }
 
 function htmlBuildTableRow($row) {
@@ -48,7 +49,7 @@ function htmlBuildTableRow($row) {
 }
 
 function htmlBuildTableButtons() {
-    $records = sqlGetCount(getNavDBTable(), getWhere());
+    $records = sqlGetCount(getNavDBTable(), getWhere()); // TODO use cache here
     $current_page = getPage();
     $max_page = intdiv($records, ITEMS_PER_PAGE) - 1;
     if ($records % ITEMS_PER_PAGE > 0) {
@@ -140,7 +141,11 @@ function htmlBuildTable() {
     htmlIncreaseIndent();
     $table .= htmlPrint('<tr>');
     htmlIncreaseIndent();
-    $header = explode(',', getTableHeader(getNav()));
+    $header = getTableHeader();
+    if (getUserType() == EXECUTOR_USER_TYPE and getNav() == 0) {
+        // button
+        $header[] = "action";
+    }
     for ($i = 0; $i < count($header); $i++) {
         $table .= htmlPrint('<th>'.$header[$i].'</th>');
     }
